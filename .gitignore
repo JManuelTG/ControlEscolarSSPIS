@@ -1,0 +1,38 @@
+# Ignorar archivos .doc
+*.doc
+
+# Ignorar archivos .rar
+*.rar
+
+# Ignorar imágenes comunes
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# Ignorar archivos de video comunes
+*.mp4
+*.avi
+*.mkv
+
+# Ignorar archivos de audio comunes
+*.mp3
+*.wav
+
+# Ignorar archivos de respaldo de texto
+*~
+
+# Ignorar archivos de configuración específicos de IDEs
+.vscode/
+.idea/
+
+# Ignorar archivos de compilación
+*.o
+*.obj
+*.dll
+*.exe
+
+# Ignorar directorios de compilación
+/build/
+/bin/
+/out/
