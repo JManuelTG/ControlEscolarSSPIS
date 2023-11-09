@@ -1,7 +1,6 @@
 from tkinter import *
 import tkinter as tk
 import ttkbootstrap as ttk
-import tkcalendar
 from Connection import PostgresDBConnection
 
 class ControlEscolar:
