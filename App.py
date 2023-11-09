@@ -1,47 +1,32 @@
 from tkinter import *
 import tkinter as tk
 import ttkbootstrap as ttk
+import tkcalendar
+from Connection import PostgresDBConnection
 
 class ControlEscolar:
+
     def __init__(self, root):
         self.root = root
         self.root.title("Control Escolar")
-        self.root.geometry("1080x720")
+        self.root.geometry("750x720")
         self.root.iconbitmap("Escuela.ico")
-
+        self.connection = PostgresDBConnection(
+            host="localhost",
+            database="ControlEscolar",
+            user="postgres",
+            password="Loquesea24.,."
+        )
+        
         # Inicialmente, las pestañas estarán bloqueadas
         self.tabs_enabled = False
 
         self.users = {
-            "admin": {
-                "pwd": "admin",
-                "type": "admin",
-                "ID": "",
-                "name":"",
-                "lastname": "",
-                "middlename": "",
-                "mail": "",
-            },
-            "teacher": {
-                "pwd": "teacher",
-                "type": "teacher",
-                "ID": "",
-                "name":"name",
-                "lastname": "",
-                "middlename": "",
-                "mail": "",
-            },
-            "student": {
-                "pwd": "student",
-                "type": "student",
-                "ID": "1212",
-                "name":"Manuel",
-                "lastname": "Gomez",
-                "middlename": "Tarula",
-                "mail": "test@mail.com",
+            "admin": "admin",
+            "teacher": "teacher",
+            "student": "student"
             }
-        }
-
+        
         self.create_widgets()
 
     def create_widgets(self):
@@ -94,9 +79,9 @@ class ControlEscolar:
         password = self.password_entry.get()
 
         # Verificar el inicio de sesión y establecer el rol del usuario
-        if username in self.users and password == self.users[username]["pwd"]:
-            self.current_user_role = self.users[username]["type"]
-            self.enable_tabs_for_role(self.users[username]["type"])
+        if username in self.users and password == self.users[username]:
+            self.current_user_role = username
+            self.enable_tabs_for_role(username)
             self.status_label.config(text="Inicio de sesión exitoso")
         else:
             self.status_label.config(text="Credenciales incorrectas")
@@ -114,136 +99,543 @@ class ControlEscolar:
         elif role == "admin":
             for tab_frame in self.tabs.values():
                 self.tab_control.tab(tab_frame, state="normal")
-            self.users_tab()
-            self.teacher_tab()
-            self.student_tab()
-            self.groups_tab()
-            self.schedule_tab()
-            self.lounge_tab()
-            self.career_tab()
-            self.plannig_tab()
+            self.usuarios_tab()
+            self.maestros_tab()
+            self.alumnos_tab()
+            self.grupos_tab()
+            self.materias_tab()
+            self.horarios_tab()
+            self.salon_tab()
+            self.carrera_tab()
+            self.planeacion_tab()
                 
-    def users_tab(self):
+    def usuarios_tab(self):
         # Elementos en la pestaña de usuarios
         users_frame = self.tabs["Usuarios"]
 
-        self.find_user_label = tk.Label(users_frame, text="Ingrese codigo de usuario: ")
-        self.find_user_label.grid(column=2, row=1)
-        
-        self.find_user_entry = tk.Entry(users_frame)
-        self.find_user_entry.grid(column=8, row=1, padx=40)
-        
-        self.find_user_button = ttk.Button(users_frame, text="Buscar", command=self.find_user, bootstyle="success")
-        self.find_user_button.grid(column=12, row=1)
+        # Label para "Ingrese código de usuario"
+        codigo_usuario_label = tk.Label(users_frame, text="Ingrese código de usuario:")
+        codigo_usuario_label.grid(column=2, row=1)
 
+        # Cuadro de texto para ingresar el código de usuario
+        codigo_usuario_entry = tk.Entry(users_frame)
+        codigo_usuario_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(users_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
         ttk.Separator(users_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
-        
-        # Label y cuadro de texto para "ID"
+
+        # Labels y cuadros de texto para información del usuario
         id_label = tk.Label(users_frame, text="ID:")
         id_label.grid(column=2, row=4, pady=10)
         id_entry = tk.Entry(users_frame)
         id_entry.grid(column=8, row=4, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Nombre de usuario"
         username_label = tk.Label(users_frame, text="Nombre de usuario:")
         username_label.grid(column=2, row=6, pady=10)
         username_entry = tk.Entry(users_frame)
         username_entry.grid(column=8, row=6, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Nombre"
-        name_label = tk.Label(users_frame, text="Nombre:")
-        name_label.grid(column=2, row=8, pady=10)
-        name_entry = tk.Entry(users_frame)
-        name_entry.grid(column=8, row=8, padx=40, pady=10)
+        nombre_label = tk.Label(users_frame, text="Nombre:")
+        nombre_label.grid(column=2, row=8, pady=10)
+        nombre_entry = tk.Entry(users_frame)
+        nombre_entry.grid(column=8, row=8, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Apellido paterno"
-        last_name_label = tk.Label(users_frame, text="Apellido paterno:")
-        last_name_label.grid(column=2, row=10, pady=10)
-        last_name_entry = tk.Entry(users_frame)
-        last_name_entry.grid(column=8, row=10, padx=40, pady=10)
+        apellido_paterno_label = tk.Label(users_frame, text="Apellido paterno:")
+        apellido_paterno_label.grid(column=2, row=10, pady=10)
+        apellido_paterno_entry = tk.Entry(users_frame)
+        apellido_paterno_entry.grid(column=8, row=10, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Apellido materno"
-        mother_name_label = tk.Label(users_frame, text="Apellido materno:")
-        mother_name_label.grid(column=2, row=12, pady=10)
-        mother_name_entry = tk.Entry(users_frame)
-        mother_name_entry.grid(column=8, row=12, padx=40, pady=10)
+        apellido_materno_label = tk.Label(users_frame, text="Apellido materno:")
+        apellido_materno_label.grid(column=2, row=12, pady=10)
+        apellido_materno_entry = tk.Entry(users_frame)
+        apellido_materno_entry.grid(column=8, row=12, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Contraseña"
         password_label = tk.Label(users_frame, text="Contraseña:")
         password_label.grid(column=2, row=13, pady=10)
         password_entry = tk.Entry(users_frame, show="*")
         password_entry.grid(column=8, row=13, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Email"
         email_label = tk.Label(users_frame, text="Email:")
         email_label.grid(column=2, row=14, pady=10)
         email_entry = tk.Entry(users_frame)
         email_entry.grid(column=8, row=14, padx=40, pady=10)
 
-        # Label y cuadro de texto para "Tipo de usuario" (puedes usar una lista desplegable)
-        user_type_label = tk.Label(users_frame, text="Tipo de usuario:")
-        user_type_label.grid(column=2, row=16, pady=10)
+        tipo_usuario_label = tk.Label(users_frame, text="Tipo de usuario:")
+        tipo_usuario_label.grid(column=2, row=16, pady=10)
         
-        user_types = ["Admin", "Maestro", "Alumno"]  # Opciones para el tipo de usuario
-        user_type_var = ttk.StringVar(users_frame)
-        user_type_var.set(user_types[0])  # Valor predeterminado
-        user_type_dropdown = tk.OptionMenu(users_frame, user_type_var, *user_types)
-        user_type_dropdown.grid(column=8, row=16, pady=10)
+        tipos_usuario = ["Admin", "Maestro", "Alumno"]  # Opciones para el tipo de usuario
+        
+        tipo_usuario_var = ttk.StringVar(users_frame)
+        tipo_usuario_var.set(tipos_usuario[0])  # Valor predeterminado
+        tipo_usuario_dropdown = tk.OptionMenu(users_frame, tipo_usuario_var, *tipos_usuario)
+        tipo_usuario_dropdown.grid(column=8, row=16, pady=10)
 
-        # Botón para agregar el usuario
-        add_user_button = ttk.Button(users_frame, text="Nuevo", command=self.add_user, bootstyle="success")
-        add_user_button.grid(column=2, row=20, columnspan=2, pady=20, padx=10)
-    
-        # Botón para agregar el usuario
-        add_user_button = ttk.Button(users_frame, text="Guardar", command=self.add_user, bootstyle="success")
-        add_user_button.grid(column=4, row=20, columnspan=2, pady=20, padx=10)
-    
-        # Botón para agregar el usuario
-        add_user_button = ttk.Button(users_frame, text="Cancelar", command=self.add_user, bootstyle="success")
-        add_user_button.grid(column=6, row=20, columnspan=2, pady=20, padx=10)
-        
-        # Botón para agregar el usuario
-        add_user_button = ttk.Button(users_frame, text="Editar", command=self.add_user, bootstyle="success")
-        add_user_button.grid(column=8, row=20, columnspan=2, pady=20, padx=10)
-        
-        # Botón para agregar el usuario
-        add_user_button = ttk.Button(users_frame, text="Baja", command=self.add_user, bootstyle="success")
-        add_user_button.grid(column=10, row=20, columnspan=2, pady=20, padx=10)
-    
-    def find_user(self):
-        pass
+        # Botones para realizar acciones
+        nuevo_button = ttk.Button(users_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=20, columnspan=2, pady=20, padx=10)
 
-    def add_user(self):
-        pass
-    
-    def student_tab(self):
+        guardar_button = ttk.Button(users_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=20, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(users_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=20, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(users_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=20, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(users_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=20, columnspan=2, pady=20, padx=10)
+
+    def alumnos_tab(self):
         # Elementos en la pestaña de alumnos
         students_frame = self.tabs["Alumnos"]
+
+        # Label para "Ingrese código de alumno"
+        codigo_alumno_label = tk.Label(students_frame, text="Ingrese código de alumno:")
+        codigo_alumno_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el código del alumno
+        codigo_alumno_entry = tk.Entry(students_frame)
+        codigo_alumno_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(students_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(students_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Labels y cuadros de texto para información del alumno
+        id_label = tk.Label(students_frame, text="ID:")
+        id_label.grid(column=2, row=4, pady=10)
+        id_entry = tk.Entry(students_frame)
+        id_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        nombre_label = tk.Label(students_frame, text="Nombre:")
+        nombre_label.grid(column=2, row=8, pady=10)
+        nombre_entry = tk.Entry(students_frame)
+        nombre_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        apellido_paterno_label = tk.Label(students_frame, text="Apellido paterno:")
+        apellido_paterno_label.grid(column=2, row=10, pady=10)
+        apellido_paterno_entry = tk.Entry(students_frame)
+        apellido_paterno_entry.grid(column=8, row=10, padx=40, pady=10)
+
+        apellido_materno_label = tk.Label(students_frame, text="Apellido materno:")
+        apellido_materno_label.grid(column=2, row=12, pady=10)
+        apellido_materno_entry = tk.Entry(students_frame)
+        apellido_materno_entry.grid(column=8, row=12, padx=40, pady=10)
+
+        carrera_label = tk.Label(students_frame, text="Carrera:")
+        carrera_label.grid(column=2, row=13, pady=10)
+        carreras = ["Ingenieria en Computacion", "Ingenieria en Informatica"]
+        carrera_var = ttk.StringVar(students_frame)
+        carrera_var.set(carreras[0])  # Valor predeterminado
+        carrera_dropdown = tk.OptionMenu(students_frame, carrera_var, *carreras)
+        carrera_dropdown.grid(column=8, row=13, pady=10)
+
+        fecha_nacimiento_label = tk.Label(students_frame, text="Fecha de Nacimiento:")
+        fecha_nacimiento_label.grid(column=2, row=14, pady=10)
+        fecha_nacimiento_entry = tk.Entry(students_frame, show="*")
+        fecha_nacimiento_entry.grid(column=8, row=14, padx=40, pady=10)
+
+        email_label = tk.Label(students_frame, text="Email:")
+        email_label.grid(column=2, row=15, pady=10)
+        email_entry = tk.Entry(students_frame)
+        email_entry.grid(column=8, row=15, padx=40, pady=10)
+
+        estado_label = tk.Label(students_frame, text="Estado:")
+        estado_label.grid(column=2, row=17, pady=10)
+        
+        states = [
+            "Aguascalientes",
+            "Baja California",
+            "Baja California Sur",
+            "Campeche",
+            "Chiapas",
+            "Chihuahua",
+            "Coahuila",
+            "Colima",
+            "Durango",
+            "Guanajuato",
+            "Guerrero",
+            "Hidalgo",
+            "Jalisco",
+            "Estado de México",
+            "Ciudad de México",
+            "Michoacán",
+            "Morelos",
+            "Nayarit",
+            "Nuevo León",
+            "Oaxaca",
+            "Puebla",
+            "Querétaro",
+            "Quintana Roo",
+            "San Luis Potosí",
+            "Sinaloa",
+            "Sonora",
+            "Tabasco",
+            "Tamaulipas",
+            "Tlaxcala",
+            "Veracruz",
+            "Yucatán",
+            "Zacatecas"
+        ]
+        
+        estado_var = ttk.StringVar(students_frame)
+        estado_var.set(states[0])  # Valor predeterminado
+        estado_dropdown = tk.OptionMenu(students_frame, estado_var, *states)
+        estado_dropdown.grid(column=8, row=17, pady=10)
+
+        materias_label = tk.Label(students_frame, text="Materias:")
+        materias_label.grid(column=2, row=16, pady=10)
+        
+        materias = [
+            "Física 1",
+            "Programación Estructurada",
+            "Estructura de Datos",
+            "Inteligencia Artificial",
+            "Ingeniería de Software 1"
+        ]
+        
+        materias_var = ttk.StringVar(students_frame)
+        materias_var.set(materias[0])  # Valor predeterminado
+        materias_dropdown = tk.OptionMenu(students_frame, materias_var, *materias)
+        materias_dropdown.grid(column=8, row=16, pady=10)
+
+        # Botones para realizar acciones
+        nuevo_button = ttk.Button(students_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=23, columnspan=2, pady=20, padx=10)
+
+        guardar_button = ttk.Button(students_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=23, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(students_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=23, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(students_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=23, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(students_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=23, columnspan=2, pady=20, padx=10)
     
-    def teacher_tab(self):
-        # Elementos en la pestaña de maestros
+    def maestros_tab(self):
+    # Elementos en la pestaña de maestros
         teachers_frame = self.tabs["Maestros"]
-        teacher_label = tk.Label(teachers_frame, text="Bienvenido, Maestro")
-        teacher_label.pack(pady=20)
-        teacher_textbox = tk.Entry(teachers_frame)
-        teacher_textbox.pack()
+        
+        # Label para "Ingrese código del maestro"
+        codigo_maestro_label = tk.Label(teachers_frame, text="Ingrese código del maestro:")
+        codigo_maestro_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el código del maestro
+        codigo_maestro_entry = tk.Entry(teachers_frame)
+        codigo_maestro_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(teachers_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(teachers_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Labels y cuadros de texto para información del maestro
+        id_label = tk.Label(teachers_frame, text="ID:")
+        id_label.grid(column=2, row=4, pady=10)
+        id_entry = tk.Entry(teachers_frame)
+        id_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        nombre_label = tk.Label(teachers_frame, text="Nombre:")
+        nombre_label.grid(column=2, row=8, pady=10)
+        nombre_entry = tk.Entry(teachers_frame)
+        nombre_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        apellido_paterno_label = tk.Label(teachers_frame, text="Apellido paterno:")
+        apellido_paterno_label.grid(column=2, row=10, pady=10)
+        apellido_paterno_entry = tk.Entry(teachers_frame)
+        apellido_paterno_entry.grid(column=8, row=10, padx=40, pady=10)
+
+        apellido_materno_label = tk.Label(teachers_frame, text="Apellido materno:")
+        apellido_materno_label.grid(column=2, row=12, pady=10)
+        apellido_materno_entry = tk.Entry(teachers_frame)
+        apellido_materno_entry.grid(column=8, row=12, padx=40, pady=10)
+
+        carrera_label = tk.Label(teachers_frame, text="Carrera:")
+        carrera_label.grid(column=2, row=13, pady=10)
+        carreras = ["Ingenieria en Computacion", "Ingenieria en Informatica"]
+        carrera_var = ttk.StringVar(teachers_frame)
+        carrera_var.set(carreras[0])  # Valor predeterminado
+        carrera_dropdown = tk.OptionMenu(teachers_frame, carrera_var, *carreras)
+        carrera_dropdown.grid(column=8, row=13, pady=10)
+        
+        email_label = tk.Label(teachers_frame, text="Email:")
+        email_label.grid(column=2, row=14, pady=10)
+        email_entry = tk.Entry(teachers_frame)
+        email_entry.grid(column=8, row=14, padx=40, pady=10)
+
+        materias_label = tk.Label(teachers_frame, text="Materias:")
+        materias_label.grid(column=2, row=16, pady=10)
+
+        materias = ["Fisica 1", "Programacion Estructurada", "Estructura de Datos", "Inteligencia Artificial", "Ingenieria de Software 1"]
+        materias_var = tk.StringVar(teachers_frame)
+        materias_var.set(materias[0])
+        materias_dropdown = tk.OptionMenu(teachers_frame, materias_var, *materias)
+        materias_dropdown.grid(column=8, row=16, pady=10)
+
+        grado_label = tk.Label(teachers_frame, text="Grado de estudios:")
+        grado_label.grid(column=2, row=17, pady=10)
+        grado_entry = tk.Entry(teachers_frame, show="*")
+        grado_entry.grid(column=8, row=17, padx=40, pady=10)
+
+        # Botones
+        nuevo_button = ttk.Button(teachers_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=22, columnspan=2, pady=20, padx=10)
+
+        guardar_button = ttk.Button(teachers_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=22, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(teachers_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=22, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(teachers_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=22, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(teachers_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=22, columnspan=2, pady=20, padx=10)
     
-    def groups_tab(self):
+    def materias_tab(self):
+        # Elementos en la pestaña de materias
+        materias_frame = self.tabs["Materias"]
+        
+        # Label para "Ingrese ID de la materia"
+        id_materia_label = tk.Label(materias_frame, text="Ingrese ID de la materia:")
+        id_materia_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el ID de la materia
+        id_materia_entry = tk.Entry(materias_frame)
+        id_materia_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(materias_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(materias_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Labels y cuadros de texto para información de la materia
+        asignatura_label = tk.Label(materias_frame, text="Asignatura:")
+        asignatura_label.grid(column=2, row=4, pady=10)
+        asignatura_entry = tk.Entry(materias_frame)
+        asignatura_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        creditos_label = tk.Label(materias_frame, text="Créditos:")
+        creditos_label.grid(column=2, row=8, pady=10)
+        creditos_entry = tk.Entry(materias_frame)
+        creditos_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        semestre_label = tk.Label(materias_frame, text="Semestre:")
+        semestre_label.grid(column=2, row=10, pady=10)
+        semestre_entry = tk.Entry(materias_frame)
+        semestre_entry.grid(column=8, row=10, padx=40, pady=10)
+
+        carrera_label = tk.Label(materias_frame, text="Carrera:")
+        carrera_label.grid(column=2, row=12, pady=10)
+        carreras = ["Ingenieria en Computacion", "Ingenieria en Informatica"]
+        carrera_var = ttk.StringVar(materias_frame)
+        carrera_var.set(carreras[0])  # Valor predeterminado
+        carrera_dropdown = tk.OptionMenu(materias_frame, carrera_var, *carreras)
+        carrera_dropdown.grid(column=8, row=12, pady=10)
+
+        # Botones
+        nuevo_button = ttk.Button(materias_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=17, columnspan=2, pady=20, padx=10)
+
+        guardar_button = ttk.Button(materias_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=17, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(materias_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=17, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(materias_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=17, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(materias_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=17, columnspan=2, pady=20, padx=10)
+  
+    def grupos_tab(self):
         # Elementos en la pestaña de grupos
         grupus_frame = self.tabs["Grupos"]
     
-    def schedule_tab(self):
-        # Elementos en la pestaña de horarios
-        schedule_frame = self.tabs["Horarios"]
+    def horarios_tab(self):
+        # Elementos en la pestaña de Horario
+        horario_frame = self.tabs["Horarios"]
+        
+        # Label para "Ingrese ID de Horario"
+        id_horario_label = tk.Label(horario_frame, text="Ingrese ID de Horario:")
+        id_horario_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el ID de horario
+        id_horario_entry = tk.Entry(horario_frame)
+        id_horario_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(horario_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(horario_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Label para "Turno"
+        turno_label = tk.Label(horario_frame, text="Turno:")
+        turno_label.grid(column=2, row=4, pady=10)
+        
+        # Cuadro de texto para ingresar el turno
+        turno_entry = tk.Entry(horario_frame)
+        turno_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        # Label para "Horario"
+        horario_label = tk.Label(horario_frame, text="Horario (HH:MM):")
+        horario_label.grid(column=2, row=8, pady=10)
+        
+        # Cuadro de texto para ingresar la hora
+        horario_entry = tk.Entry(horario_frame)
+        horario_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        # Botones para realizar acciones
+        nuevo_button = ttk.Button(horario_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=13, columnspan=2, pady=20, padx=10)
+
+        guardar_button = ttk.Button(horario_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=13, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(horario_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=13, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(horario_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=13, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(horario_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=13, columnspan=2, pady=20, padx=10)
+
+        
+    def salon_tab(self):
+        # Elementos en la pestaña de Salones
+        salones_frame = self.tabs["Salon"]
+        
+        # Label para "Ingrese ID de Salón"
+        id_salon_label = tk.Label(salones_frame, text="Ingrese ID de Salón:")
+        id_salon_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el ID del salón
+        id_salon_entry = tk.Entry(salones_frame)
+        id_salon_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(salones_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(salones_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Labels y cuadros de texto para información del salón
+        nombre_salon_label = tk.Label(salones_frame, text="Nombre de Salón:")
+        nombre_salon_label.grid(column=2, row=4, pady=10)
+        nombre_salon_entry = tk.Entry(salones_frame)
+        nombre_salon_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        edificio_label = tk.Label(salones_frame, text="Edificio:")
+        edificio_label.grid(column=2, row=8, pady=10)
+
+        # Opciones para el menú desplegable de edificios de "A" a "Z" en mayúscula
+        edificios = [chr(i) for i in range(ord('A'), ord('Z')+1)]
+
+        edificio_var = tk.StringVar(salones_frame)
+        edificio_var.set(edificios[0])  # Valor predeterminado
+        edificio_dropdown = tk.OptionMenu(salones_frame, edificio_var, *edificios)
+        edificio_dropdown.grid(column=8, row=8, pady=10)
+
+        # Botones para realizar acciones
+        nuevo_button = ttk.Button(salones_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=13, columnspan=2, pady=20, padx=10)
+
+        guardar_button = ttk.Button(salones_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=13, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(salones_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=13, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(salones_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=13, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(salones_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=13, columnspan=2, pady=20, padx=10)
+
     
-    def lounge_tab(self):
-        # Elementos en la pestaña de salon
-        lounge_frame = self.tabs["Salon"]
-    
-    def career_tab(self):
-        # Elementos en la pestaña de Carrera
-        career_frame = self.tabs["Carrera"]
-    
-    def plannig_tab(self):
+    def carrera_tab(self):
+        # Elementos en la pestaña de Carreras
+        carreras_frame = self.tabs["Carrera"]
+        
+        # Label para "Ingrese ID de Carrera"
+        id_carrera_label = tk.Label(carreras_frame, text="Ingrese ID de Carrera:")
+        id_carrera_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el ID de la carrera
+        id_carrera_entry = tk.Entry(carreras_frame)
+        id_carrera_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(carreras_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(carreras_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Labels y cuadros de texto para información de la carrera
+        nombre_carrera_label = tk.Label(carreras_frame, text="Nombre de Carrera:")
+        nombre_carrera_label.grid(column=2, row=4, pady=10)
+        nombre_carrera_entry = tk.Entry(carreras_frame)
+        nombre_carrera_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        semestres_label = tk.Label(carreras_frame, text="Número de Semestres:")
+        semestres_label.grid(column=2, row=8, pady=10)
+        semestres_entry = tk.Entry(carreras_frame)
+        semestres_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        materias_label = tk.Label(carreras_frame, text="Materias:")
+        materias_label.grid(column=2, row=10, pady=10)
+        
+        materias = ["Física 1", "Programación Estructurada", "Estructura de Datos", "Inteligencia Artificial", "Ingeniería de Software 1"]
+        materias_var = tk.StringVar(carreras_frame)
+        materias_var.set(materias[0])  # Valor predeterminado
+        materias_dropdown = tk.OptionMenu(carreras_frame, materias_var, *materias)
+        materias_dropdown.grid(column=8, row=10, pady=10)
+
+        # Botones para realizar acciones
+        nuevo_button = ttk.Button(carreras_frame, text="Nuevo", command=self.busca, bootstyle="success")
+        nuevo_button.grid(column=2, row=15, columnspan=2, pady=20, padx=10)
+
+        guardar_button = ttk.Button(carreras_frame, text="Guardar", command=self.busca, bootstyle="success")
+        guardar_button.grid(column=4, row=15, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(carreras_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button.grid(column=6, row=15, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(carreras_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button.grid(column=8, row=15, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(carreras_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button.grid(column=10, row=15, columnspan=2, pady=20, padx=10)
+        
+    def planeacion_tab(self):
         # Elementos en la pestaña de planeacion
         plannig_frame = self.tabs["Planeacion"]
+
+# ===========================================================================
+# Metodos usados por la clase
+# ===========================================================================
+
+    def busca(self):
+        pass
