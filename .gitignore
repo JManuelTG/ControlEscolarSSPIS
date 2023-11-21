@@ -1,5 +1,6 @@
 # Ignorar archivos .doc
 *.doc
+*.csv
 
 # Ignorar archivos .rar
 *.rar
