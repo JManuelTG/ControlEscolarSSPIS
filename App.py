@@ -1,7 +1,6 @@
 from tkinter import *
 import tkinter as tk
 import ttkbootstrap as ttk
-from Connection import PostgresDBConnection
 import csv
 
 class ControlEscolar:
@@ -11,12 +10,6 @@ class ControlEscolar:
         self.root.title("Control Escolar")
         self.root.geometry("750x720")
         self.root.iconbitmap("Escuela.ico")
-        self.connection = PostgresDBConnection(
-            host="localhost",
-            database="ControlEscolar",
-            user="postgres",
-            password="Loquesea24.,."
-        )
         
         # Inicialmente, las pestañas estarán bloqueadas
         self.tabs_enabled = False
@@ -108,6 +101,11 @@ class ControlEscolar:
             self.salon_tab()
             self.carrera_tab()
             self.planeacion_tab()
+
+# ===========================================================================
+# TABS
+# Tab usuarios
+# ===========================================================================
                 
     def usuarios_tab(self):
         # Elementos en la pestaña de usuarios
@@ -323,6 +321,10 @@ class ControlEscolar:
         except Exception as e:
             # Manejar errores
             self.status_label.config(text=f"Error al editar usuario: {str(e)}", fg="red")
+
+# ===========================================================================
+# Tab alumnos
+# ===========================================================================
 
     def alumnos_tab(self):
         # Elementos en la pestaña de alumnos
@@ -594,6 +596,10 @@ class ControlEscolar:
         except Exception as e:
             # Manejar errores
             self.status_label.config(text=f"Error al editar alumno: {str(e)}", fg="red")
+
+# ===========================================================================
+# Tab Maestros
+# ===========================================================================
     
     def maestros_tab(self):
     # Elementos en la pestaña de maestros
@@ -812,6 +818,10 @@ class ControlEscolar:
             # Manejar errores
             self.status_label.config(text=f"Error al editar maestro: {str(e)}", fg="red")
 
+# ===========================================================================
+# Tab Materias
+# ===========================================================================
+
     def materias_tab(self):
         # Elementos en la pestaña de materias
         materias_frame = self.tabs["Materias"]
@@ -831,11 +841,17 @@ class ControlEscolar:
         # Separador horizontal
         ttk.Separator(materias_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
 
+        # Label para "Ingrese ID de la materia"
+        self.id_materia = tk.Label(materias_frame, text="ID:")
+        self.id_materia.grid(column=2, row=4)
+        self.id_materia = tk.Entry(materias_frame)
+        self.id_materia.grid(column=8, row=4, padx=40, pady=10)
+
         # Labels y cuadros de texto para información de la materia
         self.materias_asignatura_label = tk.Label(materias_frame, text="Asignatura:")
-        self.materias_asignatura_label.grid(column=2, row=4, pady=10)
+        self.materias_asignatura_label.grid(column=2, row=6, pady=10)
         self.materias_asignatura_entry = tk.Entry(materias_frame)
-        self.materias_asignatura_entry.grid(column=8, row=4, padx=40, pady=10)
+        self.materias_asignatura_entry.grid(column=8, row=6, padx=40, pady=10)
 
         self.materias_creditos_label = tk.Label(materias_frame, text="Créditos:")
         self.materias_creditos_label.grid(column=2, row=8, pady=10)
@@ -875,6 +891,9 @@ class ControlEscolar:
                 for row in reader:
                     if row and row[0] == self.id_materia_entry.get():
                         # Encontrado: Actualizar los campos de entrada con los datos encontrados
+                        self.id_materia.delete(0, tk.END)
+                        self.id_materia.insert(0, row[0])
+                        
                         self.materias_asignatura_entry.delete(0, tk.END)
                         self.materias_asignatura_entry.insert(0, row[1])
 
@@ -897,7 +916,7 @@ class ControlEscolar:
 
     def guardar_materia(self):
         # Obtener los valores de los campos de entrada
-        id = self.id_materia_entry.get()
+        id = self.id_materia.get()
         asignatura = self.materias_asignatura_entry.get()
         creditos = self.materias_creditos_entry.get()
         semestre = self.materias_semestre_entry.get()
@@ -942,7 +961,7 @@ class ControlEscolar:
 
     def cancelar_materia(self):
         # Limpiar todos los campos de entrada
-        self.id_materia_entry.delete(0, tk.END)
+        self.id_materia.delete(0, tk.END)
         self.materias_asignatura_entry.delete(0, tk.END)
         self.materias_creditos_entry.delete(0, tk.END)
         self.materias_semestre_entry.delete(0, tk.END)
@@ -959,7 +978,7 @@ class ControlEscolar:
                 if row and row[0] == self.id_materia_entry.get():
                     # Encontrado: Actualizar los campos en el registro
                     registros[i] = [
-                        self.id_materia_entry.get(),
+                        self.id_materia.get(),
                         self.materias_asignatura_entry.get(),
                         self.materias_creditos_entry.get(),
                         self.materias_semestre_entry.get(),
@@ -983,10 +1002,10 @@ class ControlEscolar:
             # Manejar errores
             self.status_label.config(text=f"Error al editar materia: {str(e)}", fg="red")
 
-    def grupos_tab(self):
-        # Elementos en la pestaña de grupos
-        grupus_frame = self.tabs["Grupos"]
-    
+# ===========================================================================
+# Tab Horarios
+# ===========================================================================
+ 
     def horarios_tab(self):
         # Elementos en la pestaña de Horario
         horario_frame = self.tabs["Horarios"]
@@ -996,48 +1015,161 @@ class ControlEscolar:
         id_horario_label.grid(column=2, row=1)
 
         # Cuadro de texto para ingresar el ID de horario
-        id_horario_entry = tk.Entry(horario_frame)
-        id_horario_entry.grid(column=8, row=1, padx=40)
+        self.id_horario_entry = tk.Entry(horario_frame)
+        self.id_horario_entry.grid(column=8, row=1, padx=40)
 
         # Botón de búsqueda
-        buscar_button = ttk.Button(horario_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button = ttk.Button(horario_frame, text="Buscar", command=self.buscar_horario, bootstyle="success")
         buscar_button.grid(column=12, row=1)
 
         # Separador horizontal
         ttk.Separator(horario_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
 
+        self.label_id_horario = tk.Label(horario_frame, text="ID:")
+        self.label_id_horario.grid(column=2, row=4)
+        self.id_horario = tk.Entry(horario_frame)
+        self.id_horario.grid(column=8, row=4, padx=40, pady=10)
+        
         # Label para "Turno"
-        turno_label = tk.Label(horario_frame, text="Turno:")
-        turno_label.grid(column=2, row=4, pady=10)
+        self.horario_turno_label = tk.Label(horario_frame, text="Turno:")
+        self.horario_turno_label.grid(column=2, row=6, pady=10)
         
         # Cuadro de texto para ingresar el turno
-        turno_entry = tk.Entry(horario_frame)
-        turno_entry.grid(column=8, row=4, padx=40, pady=10)
+        self.horario_turno_entry = tk.Entry(horario_frame)
+        self.horario_turno_entry.grid(column=8, row=6, padx=40, pady=10)
 
         # Label para "Horario"
-        horario_label = tk.Label(horario_frame, text="Horario (HH:MM):")
-        horario_label.grid(column=2, row=8, pady=10)
+        self.horario_label = tk.Label(horario_frame, text="Horario (HH:MM):")
+        self.horario_label.grid(column=2, row=8, pady=10)
         
         # Cuadro de texto para ingresar la hora
-        horario_entry = tk.Entry(horario_frame)
-        horario_entry.grid(column=8, row=8, padx=40, pady=10)
+        self.horario_entry = tk.Entry(horario_frame)
+        self.horario_entry.grid(column=8, row=8, padx=40, pady=10)
 
         # Botones para realizar acciones
-        nuevo_button = ttk.Button(horario_frame, text="Nuevo", command=self.busca, bootstyle="success")
-        nuevo_button.grid(column=2, row=13, columnspan=2, pady=20, padx=10)
+        guardar_button = ttk.Button(horario_frame, text="Guardar", command=self.guardar_horario, bootstyle="success")
+        guardar_button.grid(column=2, row=13, columnspan=2, pady=20, padx=10)
 
-        guardar_button = ttk.Button(horario_frame, text="Guardar", command=self.busca, bootstyle="success")
-        guardar_button.grid(column=4, row=13, columnspan=2, pady=20, padx=10)
-
-        cancelar_button = ttk.Button(horario_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button = ttk.Button(horario_frame, text="Cancelar", command=self.cancelar_horario, bootstyle="success")
         cancelar_button.grid(column=6, row=13, columnspan=2, pady=20, padx=10)
 
-        editar_button = ttk.Button(horario_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button = ttk.Button(horario_frame, text="Editar", command=self.editar_horario, bootstyle="success")
         editar_button.grid(column=8, row=13, columnspan=2, pady=20, padx=10)
 
-        baja_button = ttk.Button(horario_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button = ttk.Button(horario_frame, text="Baja", command=self.baja_horario, bootstyle="success")
         baja_button.grid(column=10, row=13, columnspan=2, pady=20, padx=10)
-        
+
+    def buscar_horario(self):
+        try:
+            with open('data/horarios.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row and row[0] == self.id_horario_entry.get():
+                        # Encontrado: Actualizar los campos de entrada con los datos encontrados
+                        self.id_horario.delete(0, tk.END)
+                        self.id_horario.insert(0, row[0])
+                        
+                        self.horario_turno_entry.delete(0, tk.END)
+                        self.horario_turno_entry.insert(0, row[1])
+
+                        self.horario_entry.delete(0, tk.END)
+                        self.horario_entry.insert(0, row[2])
+
+                        self.status_label.config(text="Horario encontrado", fg="green")
+                        return
+            # Horario no encontrado
+            self.status_label.config(text="Horario no encontrado", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al buscar horario: {str(e)}", fg="red")
+
+    def guardar_horario(self):
+        # Obtener los valores de los campos de entrada
+        id_horario = self.id_horario.get()
+        turno = self.horario_turno_entry.get()
+        horario = self.horario_entry.get()
+
+        try:
+            # Abrir el archivo CSV en modo de escritura
+            with open('data/horarios.csv', mode='a', newline='') as file:
+                writer = csv.writer(file)
+
+                # Escribir una nueva fila con los datos del horario
+                writer.writerow([id_horario, turno, horario])
+
+            # Mensaje de éxito
+            self.status_label.config(text="Datos del horario guardados exitosamente", fg="green")
+
+        except Exception as e:
+            # Mostrar mensaje de error en caso de fallo
+            self.status_label.config(text=f"Error al guardar datos del horario: {str(e)}", fg="red")
+        self.cancelar_horario()
+
+    def baja_horario(self):
+        try:
+            with open('data/horarios.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            with open('data/horarios.csv', mode='w', newline='') as file:
+                writer = csv.writer(file)
+                for row in registros:
+                    if row and row[0] == self.id_horario_entry.get():
+                        # Saltar la fila correspondiente para borrar
+                        continue
+                    writer.writerow(row)
+
+            # Mensaje de éxito
+            self.status_label.config(text="Horario dado de baja exitosamente", fg="green")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al dar de baja el horario: {str(e)}", fg="red")
+        self.cancelar_horario()
+
+    def cancelar_horario(self):
+        # Limpiar todos los campos de entrada
+        self.id_horario.delete(0, tk.END)
+        self.horario_turno_entry.delete(0, tk.END)
+        self.horario_entry.delete(0, tk.END)
+        self.status_label.config(text="Campos limpiados", fg="black")
+
+    def editar_horario(self):
+        try:
+            with open('data/horarios.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            encontrado = False
+            for i, row in enumerate(registros):
+                if row and row[0] == self.id_horario_entry.get():
+                    # Encontrado: Actualizar los campos en el registro
+                    registros[i] = [
+                        self.id_horario.get(),
+                        self.horario_turno_entry.get(),
+                        self.horario_entry.get()
+                    ]
+                    encontrado = True
+                    break
+
+            if encontrado:
+                # Escribir todos los registros de vuelta al archivo
+                with open('data/horarios.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(registros)
+
+                self.status_label.config(text="Horario editado exitosamente", fg="green")
+            else:
+                # Horario no encontrado
+                self.status_label.config(text="Horario no encontrado para editar", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al editar horario: {str(e)}", fg="red")
+
+# ===========================================================================
+# MTab Salon
+# ===========================================================================
+
     def salon_tab(self):
         # Elementos en la pestaña de Salones
         salones_frame = self.tabs["Salon"]
@@ -1047,49 +1179,161 @@ class ControlEscolar:
         id_salon_label.grid(column=2, row=1)
 
         # Cuadro de texto para ingresar el ID del salón
-        id_salon_entry = tk.Entry(salones_frame)
-        id_salon_entry.grid(column=8, row=1, padx=40)
+        self.id_salon_entry = tk.Entry(salones_frame)
+        self.id_salon_entry.grid(column=8, row=1, padx=40)
 
         # Botón de búsqueda
-        buscar_button = ttk.Button(salones_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button = ttk.Button(salones_frame, text="Buscar", command=self.buscar_salon, bootstyle="success")
         buscar_button.grid(column=12, row=1)
 
         # Separador horizontal
         ttk.Separator(salones_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
 
         # Labels y cuadros de texto para información del salón
-        nombre_salon_label = tk.Label(salones_frame, text="Nombre de Salón:")
-        nombre_salon_label.grid(column=2, row=4, pady=10)
-        nombre_salon_entry = tk.Entry(salones_frame)
-        nombre_salon_entry.grid(column=8, row=4, padx=40, pady=10)
+        self.id_salon_label = tk.Label(salones_frame, text="ID:")
+        self.id_salon_label.grid(column=2, row=4, pady=10)
+        self.id_salon = tk.Entry(salones_frame)
+        self.id_salon.grid(column=8, row=4, padx=40, pady=10)
+        
+        self.nombre_salon_label = tk.Label(salones_frame, text="Nombre de Salón:")
+        self.nombre_salon_label.grid(column=2, row=6, pady=10)
+        self.nombre_salon_entry = tk.Entry(salones_frame)
+        self.nombre_salon_entry.grid(column=8, row=6, padx=40, pady=10)
 
-        edificio_label = tk.Label(salones_frame, text="Edificio:")
-        edificio_label.grid(column=2, row=8, pady=10)
+        self.salon_edificio_label = tk.Label(salones_frame, text="Edificio:")
+        self.salon_edificio_label.grid(column=2, row=8, pady=10)
 
         # Opciones para el menú desplegable de edificios de "A" a "Z" en mayúscula
-        edificios = [chr(i) for i in range(ord('A'), ord('Z')+1)]
+        self.salon_edificios = [chr(i) for i in range(ord('A'), ord('Z')+1)]
 
-        edificio_var = tk.StringVar(salones_frame)
-        edificio_var.set(edificios[0])  # Valor predeterminado
-        edificio_dropdown = tk.OptionMenu(salones_frame, edificio_var, *edificios)
-        edificio_dropdown.grid(column=8, row=8, pady=10)
+        self.salon_edificio_var = tk.StringVar(salones_frame)
+        self.salon_edificio_var.set(self.salon_edificios[0])  # Valor predeterminado
+        self.salon_edificio_dropdown = tk.OptionMenu(salones_frame, self.salon_edificio_var, *self.salon_edificios)
+        self.salon_edificio_dropdown.grid(column=8, row=8, pady=10)
 
         # Botones para realizar acciones
-        nuevo_button = ttk.Button(salones_frame, text="Nuevo", command=self.busca, bootstyle="success")
-        nuevo_button.grid(column=2, row=13, columnspan=2, pady=20, padx=10)
+        guardar_button = ttk.Button(salones_frame, text="Guardar", command=self.guardar_salon, bootstyle="success")
+        guardar_button.grid(column=2, row=13, columnspan=2, pady=20, padx=10)
 
-        guardar_button = ttk.Button(salones_frame, text="Guardar", command=self.busca, bootstyle="success")
-        guardar_button.grid(column=4, row=13, columnspan=2, pady=20, padx=10)
-
-        cancelar_button = ttk.Button(salones_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button = ttk.Button(salones_frame, text="Cancelar", command=self.cancelar_salon, bootstyle="success")
         cancelar_button.grid(column=6, row=13, columnspan=2, pady=20, padx=10)
 
-        editar_button = ttk.Button(salones_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button = ttk.Button(salones_frame, text="Editar", command=self.editar_salon, bootstyle="success")
         editar_button.grid(column=8, row=13, columnspan=2, pady=20, padx=10)
 
-        baja_button = ttk.Button(salones_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button = ttk.Button(salones_frame, text="Baja", command=self.baja_salon, bootstyle="success")
         baja_button.grid(column=10, row=13, columnspan=2, pady=20, padx=10)
-  
+
+    def buscar_salon(self):
+        try:
+            with open('data/salones.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row and row[0] == self.id_salon_entry.get():
+                        # Encontrado: Actualizar los campos de entrada con los datos encontrados
+                        self.id_salon.delete(0, tk.END)
+                        self.id_salon.insert(0, row[0])
+
+                        self.nombre_salon_entry.delete(0, tk.END)
+                        self.nombre_salon_entry.insert(0, row[1])
+
+                        self.salon_edificio_var.set(row[2])
+
+                        self.status_label.config(text="Salón encontrado", fg="green")
+                        return
+            # Salón no encontrado
+            self.status_label.config(text="Salón no encontrado", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al buscar salón: {str(e)}", fg="red")
+
+    def guardar_salon(self):
+        # Obtener los valores de los campos de entrada
+        id_salon = self.id_salon.get()
+        nombre_salon = self.nombre_salon_entry.get()
+        edificio = self.salon_edificio_var.get()
+
+        try:
+            # Abrir el archivo CSV en modo de escritura
+            with open('data/salones.csv', mode='a', newline='') as file:
+                writer = csv.writer(file)
+
+                # Escribir una nueva fila con los datos del salón
+                writer.writerow([id_salon, nombre_salon, edificio])
+
+            # Mensaje de éxito
+            self.status_label.config(text="Datos del salón guardados exitosamente", fg="green")
+
+        except Exception as e:
+            # Mostrar mensaje de error en caso de fallo
+            self.status_label.config(text=f"Error al guardar datos del salón: {str(e)}", fg="red")
+        self.cancelar_salon()
+
+    def baja_salon(self):
+        try:
+            with open('data/salones.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            with open('data/salones.csv', mode='w', newline='') as file:
+                writer = csv.writer(file)
+                for row in registros:
+                    if row and row[0] == self.id_salon_entry.get():
+                        # Saltar la fila correspondiente para borrar
+                        continue
+                    writer.writerow(row)
+
+            # Mensaje de éxito
+            self.status_label.config(text="Salón dado de baja exitosamente", fg="green")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al dar de baja el salón: {str(e)}", fg="red")
+        self.cancelar_salon()
+
+    def cancelar_salon(self):
+        # Limpiar todos los campos de entrada
+        self.id_salon.delete(0, tk.END)
+        self.nombre_salon_entry.delete(0, tk.END)
+        self.salon_edificio_var.set(self.salon_edificios[0])  # Restablecer el valor predeterminado en el menú desplegable
+        self.status_label.config(text="Campos limpiados", fg="black")
+
+    def editar_salon(self):
+        try:
+            with open('data/salones.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            encontrado = False
+            for i, row in enumerate(registros):
+                if row and row[0] == self.id_salon_entry.get():
+                    # Encontrado: Actualizar los campos en el registro
+                    registros[i] = [
+                        self.id_salon.get(),
+                        self.nombre_salon_entry.get(),
+                        self.salon_edificio_var.get()
+                    ]
+                    encontrado = True
+                    break
+
+            if encontrado:
+                # Escribir todos los registros de vuelta al archivo
+                with open('data/salones.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(registros)
+
+                self.status_label.config(text="Salón editado exitosamente", fg="green")
+            else:
+                # Salón no encontrado
+                self.status_label.config(text="Salón no encontrado para editar", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al editar salón: {str(e)}", fg="red")
+
+# ===========================================================================
+# Tab Carrera
+# ===========================================================================
+
     def carrera_tab(self):
         # Elementos en la pestaña de Carreras
         carreras_frame = self.tabs["Carrera"]
@@ -1099,55 +1343,181 @@ class ControlEscolar:
         id_carrera_label.grid(column=2, row=1)
 
         # Cuadro de texto para ingresar el ID de la carrera
-        id_carrera_entry = tk.Entry(carreras_frame)
-        id_carrera_entry.grid(column=8, row=1, padx=40)
+        self.id_carrera_entry = tk.Entry(carreras_frame)
+        self.id_carrera_entry.grid(column=8, row=1, padx=40)
 
         # Botón de búsqueda
-        buscar_button = ttk.Button(carreras_frame, text="Buscar", command=self.busca, bootstyle="success")
+        buscar_button = ttk.Button(carreras_frame, text="Buscar", command=self.buscar_carrera, bootstyle="success")
         buscar_button.grid(column=12, row=1)
 
         # Separador horizontal
         ttk.Separator(carreras_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
 
         # Labels y cuadros de texto para información de la carrera
-        nombre_carrera_label = tk.Label(carreras_frame, text="Nombre de Carrera:")
-        nombre_carrera_label.grid(column=2, row=4, pady=10)
-        nombre_carrera_entry = tk.Entry(carreras_frame)
-        nombre_carrera_entry.grid(column=8, row=4, padx=40, pady=10)
-
-        semestres_label = tk.Label(carreras_frame, text="Número de Semestres:")
-        semestres_label.grid(column=2, row=8, pady=10)
-        semestres_entry = tk.Entry(carreras_frame)
-        semestres_entry.grid(column=8, row=8, padx=40, pady=10)
-
-        materias_label = tk.Label(carreras_frame, text="Materias:")
-        materias_label.grid(column=2, row=10, pady=10)
+        self.carrera_id_label = tk.Label(carreras_frame, text="ID:")
+        self.carrera_id_label.grid(column=2, row=4, pady=10)
+        self.carrera_id_entry = tk.Entry(carreras_frame)
+        self.carrera_id_entry.grid(column=8, row=4, padx=40, pady=10)
         
-        materias = ["Física 1", "Programación Estructurada", "Estructura de Datos", "Inteligencia Artificial", "Ingeniería de Software 1"]
-        materias_var = tk.StringVar(carreras_frame)
-        materias_var.set(materias[0])  # Valor predeterminado
-        materias_dropdown = tk.OptionMenu(carreras_frame, materias_var, *materias)
-        materias_dropdown.grid(column=8, row=10, pady=10)
+        self.nombre_carrera_label = tk.Label(carreras_frame, text="Nombre de Carrera:")
+        self.nombre_carrera_label.grid(column=2, row=6, pady=10)
+        self.nombre_carrera_entry = tk.Entry(carreras_frame)
+        self.nombre_carrera_entry.grid(column=8, row=6, padx=40, pady=10)
+
+        self.carrera_semestres_label = tk.Label(carreras_frame, text="Número de Semestres:")
+        self.carrera_semestres_label.grid(column=2, row=8, pady=10)
+        self.carrera_semestres_entry = tk.Entry(carreras_frame)
+        self.carrera_semestres_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        self.carrera_materias_label = tk.Label(carreras_frame, text="Materias:")
+        self.carrera_materias_label.grid(column=2, row=10, pady=10)
+        
+        self.carrera_materias = ["Física 1", "Programación Estructurada", "Estructura de Datos", "Inteligencia Artificial", "Ingeniería de Software 1"]
+        self.carrera_materias_var = tk.StringVar(carreras_frame)
+        self.carrera_materias_var.set(self.carrera_materias[0])  # Valor predeterminado
+        self.carrera_materias_dropdown = tk.OptionMenu(carreras_frame, self.carrera_materias_var, *self.carrera_materias)
+        self.carrera_materias_dropdown.grid(column=8, row=10, pady=10)
 
         # Botones para realizar acciones
-        nuevo_button = ttk.Button(carreras_frame, text="Nuevo", command=self.busca, bootstyle="success")
-        nuevo_button.grid(column=2, row=15, columnspan=2, pady=20, padx=10)
+        guardar_button = ttk.Button(carreras_frame, text="Guardar", command=self.guardar_carrera, bootstyle="success")
+        guardar_button.grid(column=2, row=15, columnspan=2, pady=20, padx=10)
 
-        guardar_button = ttk.Button(carreras_frame, text="Guardar", command=self.busca, bootstyle="success")
-        guardar_button.grid(column=4, row=15, columnspan=2, pady=20, padx=10)
-
-        cancelar_button = ttk.Button(carreras_frame, text="Cancelar", command=self.busca, bootstyle="success")
+        cancelar_button = ttk.Button(carreras_frame, text="Cancelar", command=self.cancelar_carrera, bootstyle="success")
         cancelar_button.grid(column=6, row=15, columnspan=2, pady=20, padx=10)
 
-        editar_button = ttk.Button(carreras_frame, text="Editar", command=self.busca, bootstyle="success")
+        editar_button = ttk.Button(carreras_frame, text="Editar", command=self.editar_carrera, bootstyle="success")
         editar_button.grid(column=8, row=15, columnspan=2, pady=20, padx=10)
 
-        baja_button = ttk.Button(carreras_frame, text="Baja", command=self.busca, bootstyle="success")
+        baja_button = ttk.Button(carreras_frame, text="Baja", command=self.baja_carrera, bootstyle="success")
         baja_button.grid(column=10, row=15, columnspan=2, pady=20, padx=10)
-        
+
+    def buscar_carrera(self):
+        try:
+            with open('data/carreras.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row and row[0] == self.id_carrera_entry.get():
+                        # Encontrado: Actualizar los campos de entrada con los datos encontrados
+                        self.carrera_id_entry.delete(0, tk.END)
+                        self.carrera_id_entry.insert(0, row[0])
+
+                        self.nombre_carrera_entry.delete(0, tk.END)
+                        self.nombre_carrera_entry.insert(0, row[1])
+
+                        self.carrera_semestres_entry.delete(0, tk.END)
+                        self.carrera_semestres_entry.insert(0, row[2])
+
+                        self.carrera_materias_var.set(row[3])
+
+                        self.status_label.config(text="Carrera encontrada", fg="green")
+                        return
+            # Carrera no encontrada
+            self.status_label.config(text="Carrera no encontrada", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al buscar carrera: {str(e)}", fg="red")
+
+    def guardar_carrera(self):
+        # Obtener los valores de los campos de entrada
+        id_carrera = self.carrera_id_entry.get()
+        nombre_carrera = self.nombre_carrera_entry.get()
+        semestres = self.carrera_semestres_entry.get()
+        materias = self.carrera_materias_var.get()
+
+        try:
+            # Abrir el archivo CSV en modo de escritura
+            with open('data/carreras.csv', mode='a', newline='') as file:
+                writer = csv.writer(file)
+
+                # Escribir una nueva fila con los datos de la carrera
+                writer.writerow([id_carrera, nombre_carrera, semestres, materias])
+
+            # Mensaje de éxito
+            self.status_label.config(text="Datos de la carrera guardados exitosamente", fg="green")
+
+        except Exception as e:
+            # Mostrar mensaje de error en caso de fallo
+            self.status_label.config(text=f"Error al guardar datos de la carrera: {str(e)}", fg="red")
+        self.cancelar_carrera()
+
+    def baja_carrera(self):
+        try:
+            with open('data/carreras.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            with open('data/carreras.csv', mode='w', newline='') as file:
+                writer = csv.writer(file)
+                for row in registros:
+                    if row and row[0] == self.id_carrera_entry.get():
+                        # Saltar la fila correspondiente para borrar
+                        continue
+                    writer.writerow(row)
+
+            # Mensaje de éxito
+            self.status_label.config(text="Carrera dada de baja exitosamente", fg="green")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al dar de baja la carrera: {str(e)}", fg="red")
+        self.cancelar_carrera()
+
+    def cancelar_carrera(self):
+        # Limpiar todos los campos de entrada
+        self.carrera_id_entry.delete(0, tk.END)
+        self.nombre_carrera_entry.delete(0, tk.END)
+        self.carrera_semestres_entry.delete(0, tk.END)
+        self.carrera_materias_var.set(self.carrera_materias[0])  # Restablecer el valor predeterminado en el menú desplegable
+        self.status_label.config(text="Campos limpiados", fg="black")
+
+    def editar_carrera(self):
+        try:
+            with open('data/carreras.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            encontrado = False
+            for i, row in enumerate(registros):
+                if row and row[0] == self.id_carrera_entry.get():
+                    # Encontrado: Actualizar los campos en el registro
+                    registros[i] = [
+                        self.carrera_id_entry.get(),
+                        self.nombre_carrera_entry.get(),
+                        self.carrera_semestres_entry.get(),
+                        self.carrera_materias_var.get()
+                    ]
+                    encontrado = True
+                    break
+
+            if encontrado:
+                # Escribir todos los registros de vuelta al archivo
+                with open('data/carreras.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(registros)
+
+                self.status_label.config(text="Carrera editada exitosamente", fg="green")
+            else:
+                # Carrera no encontrada
+                self.status_label.config(text="Carrera no encontrada para editar", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al editar carrera: {str(e)}", fg="red")
+
+# ===========================================================================
+# Tab Planeacion
+# ===========================================================================
+
     def planeacion_tab(self):
         # Elementos en la pestaña de planeacion
         plannig_frame = self.tabs["Planeacion"]
+
+# ===========================================================================
+# Tab grupos
+# ===========================================================================
+
+    def grupos_tab(self):
+        # Elementos en la pestaña de grupos
+        grupus_frame = self.tabs["Grupos"]
 
 # ===========================================================================
 # Metodos usados por la clase
