@@ -71,25 +71,32 @@ class ControlEscolar:
         username = self.username_entry.get().lower()
         password = self.password_entry.get()
 
-        # Verificar el inicio de sesión y establecer el rol del usuario
-        if username in self.users and password == self.users[username]:
-            self.current_user_role = username
-            self.enable_tabs_for_role(username)
-            self.status_label.config(text="Inicio de sesión exitoso")
-        else:
-            self.status_label.config(text="Credenciales incorrectas")
+        try:
+            with open('data/usuarios.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row and username in row and password == row[5]:
+                        self.current_user_role = username
+                        self.enable_tabs_for_role(row[7])
+                        self.status_label.config(text="Inicio de sesión exitoso")
+                        break
+                else:
+                    self.status_label.config(text="Credenciales incorrectas")   
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al buscar horario: {str(e)}", fg="red")
     
     def enable_tabs_for_role(self, role):
         for tab_frame in self.tabs.values():
             self.tab_control.tab(tab_frame, state="disabled")
         
-        if role == "teacher":
+        if role == "Maestro":
             self.tab_control.tab(self.tabs["Maestros"], state="normal")
-            self.teacher_tab()
-        elif role == "student":
+            self.maestros_tab()
+        elif role == "Alumno":
             self.tab_control.tab(self.tabs["Alumnos"], state="normal")
-            self.student_tab()
-        elif role == "admin":
+            self.alumnos_tab()
+        elif role == "Admin":
             for tab_frame in self.tabs.values():
                 self.tab_control.tab(tab_frame, state="normal")
             self.usuarios_tab()
@@ -376,7 +383,7 @@ class ControlEscolar:
 
         self.fecha_nacimiento_alumno_label = tk.Label(students_frame, text="Fecha de Nacimiento:")
         self.fecha_nacimiento_alumno_label.grid(column=2, row=14, pady=10)
-        self.fecha_nacimiento_alumno_entry = tk.Entry(students_frame, show="*")
+        self.fecha_nacimiento_alumno_entry = tk.Entry(students_frame)
         self.fecha_nacimiento_alumno_entry.grid(column=8, row=14, padx=40, pady=10)
 
         self.email_alumno_label = tk.Label(students_frame, text="Email:")
@@ -665,7 +672,7 @@ class ControlEscolar:
 
         self.maestro_grado_label = tk.Label(teachers_frame, text="Grado de estudios:")
         self.maestro_grado_label.grid(column=2, row=17, pady=10)
-        self.maestro_grado_entry = tk.Entry(teachers_frame, show="*")
+        self.maestro_grado_entry = tk.Entry(teachers_frame)
         self.maestro_grado_entry.grid(column=8, row=17, padx=40, pady=10)
 
         # Botones
@@ -1039,7 +1046,7 @@ class ControlEscolar:
         self.horario_turno_entry.grid(column=8, row=6, padx=40, pady=10)
 
         # Label para "Horario"
-        self.horario_label = tk.Label(horario_frame, text="Horario (HH:MM):")
+        self.horario_label = tk.Label(horario_frame, text="Horario (HH:MM - HH:MM):")
         self.horario_label.grid(column=2, row=8, pady=10)
         
         # Cuadro de texto para ingresar la hora
@@ -1504,24 +1511,338 @@ class ControlEscolar:
             self.status_label.config(text=f"Error al editar carrera: {str(e)}", fg="red")
 
 # ===========================================================================
+# Tab grupos
+# ===========================================================================
+
+    def grupos_tab(self):
+        # Elementos en la pestaña de grupos
+        grupos_frame = self.tabs["Grupos"]
+        
+        # Label para "Ingrese código del grupo"
+        self.codigo_grupo_label = tk.Label(grupos_frame, text="Ingrese código del grupo:")
+        self.codigo_grupo_label.grid(column=2, row=1)
+
+        # Cuadro de texto para ingresar el código del grupo
+        self.codigo_grupo_entry = tk.Entry(grupos_frame)
+        self.codigo_grupo_entry.grid(column=8, row=1, padx=40)
+
+        # Botón de búsqueda
+        buscar_button = ttk.Button(grupos_frame, text="Buscar", command=self.buscar_grupo, bootstyle="success")
+        buscar_button.grid(column=12, row=1)
+
+        # Separador horizontal
+        ttk.Separator(grupos_frame, orient='horizontal').grid(row=2, columnspan=1000, sticky="ew", pady=20)
+
+        # Labels y cuadros de texto para información del grupo
+        self.grupo_id_label = tk.Label(grupos_frame, text="ID:")
+        self.grupo_id_label.grid(column=2, row=4, pady=10)
+        self.grupo_id_entry = tk.Entry(grupos_frame)
+        self.grupo_id_entry.grid(column=8, row=4, padx=40, pady=10)
+
+        # Grupo
+        self.grupo_nombre_label = tk.Label(grupos_frame, text="Nombre del grupo:")
+        self.grupo_nombre_label.grid(column=2, row=6, pady=10)
+        self.grupo_nombre_entry = tk.Entry(grupos_frame)
+        self.grupo_nombre_entry.grid(column=8, row=6, padx=40, pady=10)
+
+        # Fecha
+        self.grupo_fecha_label = tk.Label(grupos_frame, text="Fecha:")
+        self.grupo_fecha_label.grid(column=2, row=8, pady=10)
+        self.grupo_fecha_entry = tk.Entry(grupos_frame)
+        self.grupo_fecha_entry.grid(column=8, row=8, padx=40, pady=10)
+
+        # Carrera
+        self.grupo_carrera_label = tk.Label(grupos_frame, text="Carrera:")
+        self.grupo_carrera_label.grid(column=2, row=10, pady=10)
+        self.grupo_carreras = ["Ingenieria en Computacion", "Ingenieria en Informatica"]
+        self.grupo_carrera_var = ttk.StringVar(grupos_frame)
+        self.grupo_carrera_var.set(self.grupo_carreras[0])  # Valor predeterminado
+        self.grupo_carrera_dropdown = tk.OptionMenu(grupos_frame, self.grupo_carrera_var, *self.grupo_carreras)
+        self.grupo_carrera_dropdown.grid(column=8, row=10, pady=10)
+
+        # Materias
+        self.grupo_materia_label = tk.Label(grupos_frame, text="Materias:")
+        self.grupo_materia_label.grid(column=2, row=12, pady=10)
+        
+        self.grupo_materias = [
+            "Física 1",
+            "Programación Estructurada",
+            "Estructura de Datos",
+            "Inteligencia Artificial",
+            "Ingeniería de Software 1"
+        ]
+        
+        self.grupo_materias_var = ttk.StringVar(grupos_frame)
+        self.grupo_materias_var.set( self.grupo_materias[0])  # Valor predeterminado
+        self.grupo_materias_dropdown = tk.OptionMenu(grupos_frame, self.grupo_materias_var, * self.grupo_materias)
+        self.grupo_materias_dropdown.grid(column=8, row=12, pady=10)
+    
+        # Maestros
+        self.grupo_maestros_label = tk.Label(grupos_frame, text="Maestros:")
+        self.grupo_maestros_label.grid(column=2, row=14, pady=10)
+        
+        self.grupos_maestros = []
+        try:
+            with open('data/maestros.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row:
+                        self.grupos_maestros.append(row[1])
+        except Exception as e:
+            self.status_label.config(text=f"Error al cargar maestros: {str(e)}", fg="red")
+        
+        self.grupo_maestros_var = ttk.StringVar(grupos_frame)
+        self.grupo_maestros_var.set( self.grupos_maestros[0])  # Valor predeterminado
+        self.grupo_maestros_dropdown = tk.OptionMenu(grupos_frame, self.grupo_maestros_var, * self.grupos_maestros)
+        self.grupo_maestros_dropdown.grid(column=8, row=14, pady=10)
+        
+        # Salon
+        self.grupo_salon_label = tk.Label(grupos_frame, text="Salones:")
+        self.grupo_salon_label.grid(column=2, row=16, pady=10)
+        
+        self.grupos_salon = []
+        try:
+            with open('data/salones.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row:
+                        self.grupos_salon.append(str(row[1]))
+        except Exception as e:
+            self.status_label.config(text=f"Error al cargar salon: {str(e)}", fg="red")
+        
+        self.grupo_salon_var = ttk.StringVar(grupos_frame)
+        self.grupo_salon_var.set( self.grupos_salon[0])  # Valor predeterminado
+        self.grupo_salon_dropdown = tk.OptionMenu(grupos_frame, self.grupo_salon_var, * self.grupos_salon)
+        self.grupo_salon_dropdown.grid(column=8, row=16, pady=10)
+        
+        # Horarios
+        self.grupo_horarios_label = tk.Label(grupos_frame, text="Horarios:")
+        self.grupo_horarios_label.grid(column=2, row=18, pady=10)
+        
+        self.grupos_horarios = []
+        try:
+            with open('data/horarios.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row:
+                        self.grupos_horarios.append(row[2])
+        except Exception as e:
+            self.status_label.config(text=f"Error al cargar horarios: {str(e)}", fg="red")
+        
+        self.grupo_horarios_var = ttk.StringVar(grupos_frame)
+        self.grupo_horarios_var.set( self.grupos_horarios[0])  # Valor predeterminado
+        self.grupo_horarios_dropdown = tk.OptionMenu(grupos_frame, self.grupo_horarios_var, * self.grupos_horarios)
+        self.grupo_horarios_dropdown.grid(column=8, row=18, pady=10)
+
+        # Semestre
+        self.grupo_semestre_label = tk.Label(grupos_frame, text="Semestre:")
+        self.grupo_semestre_label.grid(column=2, row=20, pady=10)
+        self.grupo_semestre_entry = tk.Entry(grupos_frame)
+        self.grupo_semestre_entry.grid(column=8, row=20, padx=40, pady=10)
+
+        # Num de alumnos
+        self.grupo_num_alumnos_label = tk.Label(grupos_frame, text="Num alumnos:")
+        self.grupo_num_alumnos_label.grid(column=2, row=22, pady=10)
+        
+        self.grupo_num_alumnos = [str(i + 1) for i in range(39)]
+        
+        self.grupo_num_alumnos_var = tk.StringVar(grupos_frame)
+        self.grupo_num_alumnos_var.set(self.grupo_num_alumnos[0])  # Valor predeterminado
+        self.grupo_num_alumnos = tk.OptionMenu(grupos_frame, self.grupo_num_alumnos_var, *self.grupo_num_alumnos)
+        self.grupo_num_alumnos.grid(column=8, row=22, pady=10)
+
+        # Botones
+        guardar_button = ttk.Button(grupos_frame, text="Guardar", command=self.guardar_grupo, bootstyle="success")
+        guardar_button.grid(column=2, row=26, columnspan=2, pady=20, padx=10)
+
+        cancelar_button = ttk.Button(grupos_frame, text="Cancelar", command=self.cancelar_grupo, bootstyle="success")
+        cancelar_button.grid(column=6, row=26, columnspan=2, pady=20, padx=10)
+
+        editar_button = ttk.Button(grupos_frame, text="Editar", command=self.editar_grupo, bootstyle="success")
+        editar_button.grid(column=8, row=26, columnspan=2, pady=20, padx=10)
+
+        baja_button = ttk.Button(grupos_frame, text="Baja", command=self.borrar_grupo, bootstyle="success")
+        baja_button.grid(column=10, row=26, columnspan=2, pady=20, padx=10)
+
+    def buscar_grupo(self):
+        try:
+            with open('data/grupos.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row and row[0] == self.codigo_grupo_entry.get():
+                        # Encontrado: Actualizar los campos de entrada con los datos encontrados
+                        self.grupo_id_entry.delete(0, tk.END)
+                        self.grupo_id_entry.insert(0, row[0])
+
+                        self.grupo_nombre_entry.delete(0, tk.END)
+                        self.grupo_nombre_entry.insert(0, row[1])
+
+                        self.grupo_fecha_entry.delete(0, tk.END)
+                        self.grupo_fecha_entry.insert(0, row[2])
+
+                        self.grupo_carrera_var.set(row[3])
+
+                        self.grupo_materias_var.set(row[4])
+
+                        self.grupo_maestros_var.set(row[5])
+
+                        self.grupo_salon_var.set(row[6])
+
+                        self.grupo_horarios_var.set(row[7])
+
+                        self.grupo_semestre_entry.delete(0, tk.END)
+                        self.grupo_semestre_entry.insert(0, row[8])
+
+                        self.grupo_num_alumnos_var.set(row[9])
+
+                        self.status_label.config(text="Grupo encontrado", fg="green")
+                        return
+            # Grupo no encontrado
+            self.status_label.config(text="Grupo no encontrado", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al buscar grupo: {str(e)}", fg="red")
+
+    def guardar_grupo(self):
+        # Obtener los valores de los campos de entrada
+        id_grupo = self.grupo_id_entry.get()
+        nombre_grupo = self.grupo_nombre_entry.get()
+        fecha = self.grupo_fecha_entry.get()
+        carrera = self.grupo_carrera_var.get()
+        materias = self.grupo_materias_var.get()
+        maestros = self.grupo_maestros_var.get()
+        salon = self.grupo_salon_var.get()
+        horarios = self.grupo_horarios_var.get()
+        semestre = self.grupo_semestre_entry.get()
+        num_alumnos = self.grupo_num_alumnos_var.get()
+
+        try:
+            # Abrir el archivo CSV en modo de escritura
+            with open('data/grupos.csv', mode='a', newline='') as file:
+                writer = csv.writer(file)
+
+                # Escribir una nueva fila con los datos del grupo
+                writer.writerow([id_grupo, nombre_grupo, fecha, carrera, materias, maestros, salon, horarios, semestre, num_alumnos])
+
+            # Mensaje de éxito
+            self.status_label.config(text="Datos del grupo guardados exitosamente", fg="green")
+
+        except Exception as e:
+            # Mostrar mensaje de error en caso de fallo
+            self.status_label.config(text=f"Error al guardar datos del grupo: {str(e)}", fg="red")
+        self.cancelar_grupo()
+
+    def borrar_grupo(self):
+        try:
+            with open('data/grupos.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            with open('data/grupos.csv', mode='w', newline='') as file:
+                writer = csv.writer(file)
+                for row in registros:
+                    if row and row[0] == self.codigo_grupo_entry.get():
+                        # Saltar la fila correspondiente para borrar
+                        continue
+                    writer.writerow(row)
+
+            # Mensaje de éxito
+            self.status_label.config(text="Grupo borrado exitosamente", fg="green")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al borrar grupo: {str(e)}", fg="red")
+        self.cancelar_grupo()
+
+    def cancelar_grupo(self):
+        # Limpiar todos los campos de entrada
+        self.grupo_id_entry.delete(0, tk.END)
+        self.grupo_nombre_entry.delete(0, tk.END)
+        self.grupo_fecha_entry.delete(0, tk.END)
+        self.grupo_semestre_entry.delete(0, tk.END)
+        self.status_label.config(text="Campos limpiados", fg="black")
+
+    def editar_grupo(self):
+        try:
+            with open('data/grupos.csv', mode='r') as file:
+                registros = list(csv.reader(file))
+
+            encontrado = False
+            for i, row in enumerate(registros):
+                if row and row[0] == self.codigo_grupo_entry.get():
+                    # Encontrado: Actualizar los campos en el registro
+                    registros[i] = [
+                        self.grupo_id_entry.get(),
+                        self.grupo_nombre_entry.get(),
+                        self.grupo_fecha_entry.get(),
+                        self.grupo_carrera_var.get(),
+                        self.grupo_materias_var.get(),
+                        self.grupo_maestros_var.get(),
+                        self.grupo_salon_var.get(),
+                        self.grupo_horarios_var.get(),
+                        self.grupo_semestre_entry.get(),
+                        self.grupo_num_alumnos_var.get()
+                    ]
+                    encontrado = True
+                    break
+
+            if encontrado:
+                # Escribir todos los registros de vuelta al archivo
+                with open('data/grupos.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(registros)
+
+                self.status_label.config(text="Grupo editado exitosamente", fg="green")
+            else:
+                # Grupo no encontrado
+                self.status_label.config(text="Grupo no encontrado para editar", fg="red")
+
+        except Exception as e:
+            # Manejar errores
+            self.status_label.config(text=f"Error al editar grupo: {str(e)}", fg="red")
+
+# ===========================================================================
 # Tab Planeacion
 # ===========================================================================
 
     def planeacion_tab(self):
         # Elementos en la pestaña de planeacion
         plannig_frame = self.tabs["Planeacion"]
+        
+        # Obtener datos de grupos desde el archivo CSV
+        grupos_data = self.load_grupos_data()
 
-# ===========================================================================
-# Tab grupos
-# ===========================================================================
+        # Crear cuadros para mostrar la información de los grupos
+        for row, grupo in enumerate(grupos_data, start=1):
+            group_frame = ttk.Frame(plannig_frame, borderwidth=2, relief="groove")
+            group_frame.grid(row=row, column=0, padx=10, pady=10, sticky="w")
 
-    def grupos_tab(self):
-        # Elementos en la pestaña de grupos
-        grupus_frame = self.tabs["Grupos"]
+            # Mostrar información del grupo en el cuadro
+            self.show_group_info(group_frame, grupo)
 
-# ===========================================================================
-# Metodos usados por la clase
-# ===========================================================================
+    def show_group_info(self, group_frame, grupo):
+        # Labels para mostrar la información del grupo
+        tk.Label(group_frame, text=f"Nombre: {grupo[0]}", font=("bold", 10)).grid(row=0, column=0, sticky="w")
+        tk.Label(group_frame, text=f"Salón: {grupo[1]}").grid(row=1, column=0, sticky="w")
+        tk.Label(group_frame, text=f"Materia: {grupo[2]}").grid(row=2, column=0, sticky="w")
+        tk.Label(group_frame, text=f"Maestros: {grupo[3]}").grid(row=3, column=0, sticky="w")
+        tk.Label(group_frame, text=f"Horarios: {grupo[4]}").grid(row=4, column=0, sticky="w")
 
-    def busca(self):
-        pass
+    def load_grupos_data(self):
+        grupos_data = []
+
+        try:
+            with open('data/grupos.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row:
+                        nombre = row[1]
+                        salon = row[6]
+                        materia = row[4]
+                        maestros = row[5]
+                        horarios = row[7]
+                        grupos_data.append([nombre, salon, materia, maestros, horarios])
+        except Exception as e:
+            print(f"Error al cargar datos de grupos: {str(e)}")
+
+        return grupos_data
